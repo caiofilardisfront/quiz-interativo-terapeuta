@@ -39,6 +39,23 @@
             color: #2C3E50;
         }
 
+        main {
+            margin-top: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            body {
+                height: 100vh;
+                overflow: hidden;
+            }
+            
+            main {
+                margin-top: 0;
+                height: 100vh;
+                overflow: hidden;
+            }
+        }
+
         .transicao-suave {
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -111,13 +128,13 @@
     </style>
 </head>
 
-<body class="h-screen flex flex-col font-sans overflow-hidden">
+<body class="flex flex-col font-sans">
 
     <div class="w-full bg-gray-100 h-1.5 fixed top-0 left-0 z-50">
         <div id="progress-bar" class="bg-douradoMate h-1.5 w-0 transition-all duration-700 cubic-bezier(0.4, 0, 0.2, 1)"></div>
     </div>
 
-    <main class="flex-grow flex items-center justify-center p-6 w-full max-w-5xl mx-auto">
+    <main class="flex-grow flex flex-col items-center justify-center p-6 w-full max-w-5xl mx-auto min-h-screen md:h-screen md:overflow-hidden overflow-y-auto">
 
         <div id="quiz-container" class="w-full flex flex-col md:flex-row md:items-center gap-6 md:gap-16 animar-entrada">
             
