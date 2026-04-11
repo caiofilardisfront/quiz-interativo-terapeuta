@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico da Terapeuta Lucrativa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Playfair+Display:wght@400;600&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ametista: '#8E44AD',
+                        douradoMate: '#C5A059',
+                        grafite: '#2C3E50',
+                        fundo: '#FDFDFD'
+                    },
+                    fontFamily: {
+                        serif: ['Playfair Display', 'serif'],
+                        sans: ['Montserrat', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'card-base': '0 4px 15px rgba(0,0,0,0.05)',
+                        'card-hover': '0 8px 20px rgba(142, 68, 173, 0.1)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #FDFDFD;
+            color: #2C3E50;
+        }
+
+        .transicao-suave {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animar-entrada {
+            animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        .fade-out {
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .opcao-btn {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 16px;
+            padding: 20px;
+            min-height: 55px;
+            width: 100%;
+            text-align: left;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 500;
+            color: #2C3E50;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .opcao-btn:hover:not(:disabled) {
+            border-color: #C5A059;
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 20px rgba(142, 68, 173, 0.1);
+        }
+
+        .opcao-btn:active, .opcao-btn.selecionado {
+            border: 2px solid #8E44AD;
+            transform: scale(1);
+            background-color: rgba(142, 68, 173, 0.02);
+        }
+
+        .input-premium {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .input-premium:focus {
+            border-color: #8E44AD;
+            box-shadow: 0 0 0 2px rgba(142, 68, 173, 0.1);
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(197, 160, 89, 0.2);
+            border-radius: 50%;
+            border-top-color: #C5A059;
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+
+<body class="h-screen flex flex-col font-sans overflow-hidden">
+
+    <div class="w-full bg-gray-100 h-1.5 fixed top-0 left-0 z-50">
+        <div id="progress-bar" class="bg-douradoMate h-1.5 w-0 transition-all duration-700 cubic-bezier(0.4, 0, 0.2, 1)"></div>
+    </div>
+
+    <main class="flex-grow flex items-center justify-center p-6 w-full max-w-5xl mx-auto">
+
+        <div id="quiz-container" class="w-full flex flex-col md:flex-row md:items-center gap-6 md:gap-16 animar-entrada">
+            
+            <div id="image-wrapper" class="w-full md:w-1/2 overflow-hidden rounded-2xl md:rounded-3xl shadow-card-base transition-opacity duration-500 hidden">
+                <img id="question-image" src="" alt="Conceito Sistêmico" class="w-full h-48 md:h-[500px] object-cover transform hover:scale-105 transicao-suave">
+            </div>
+
+            <div id="content-wrapper" class="w-full md:w-1/2 flex flex-col text-center md:text-left justify-center">
+                <span id="question-counter" class="text-douradoMate text-xs font-semibold tracking-[0.15em] uppercase mb-4 md:mb-6 block"></span>
+                
+                <h2 id="question-text" class="text-2xl md:text-4xl font-serif text-grafite mb-6 md:mb-10 font-medium leading-relaxed"></h2>
+                
+                <div id="options-container" class="flex flex-col gap-4 md:gap-5"></div>
+
+                <button onclick="resetState()" class="mt-6 md:mt-8 text-xs text-gray-400 hover:text-ametista underline md:self-start">
+                    Reiniciar Diagnóstico
+                </button>
+            </div>
+        </div>
+
+        <div id="lead-container" class="w-full max-w-2xl hidden text-center mx-auto">
+            <h2 class="text-3xl md:text-4xl font-serif text-grafite mb-4 font-medium">Estamos processando seu mapeamento diagnóstico...</h2>
+            <p class="text-grafite opacity-80 mb-10 font-normal leading-relaxed">Para onde devemos enviar o seu resultado e o caminho para o seu destrave financeiro?</p>
+
+            <form id="lead-form" class="flex flex-col gap-5 max-w-md mx-auto">
+                <input type="text" id="lead-name" placeholder="Seu Nome" required class="input-premium w-full p-4 border border-gray-200 rounded-2xl focus:outline-none bg-white text-grafite font-medium">
+                <input type="email" id="lead-email" placeholder="Seu E-mail" required class="input-premium w-full p-4 border border-gray-200 rounded-2xl focus:outline-none bg-white text-grafite font-medium">
+                <button type="submit" class="w-full bg-ametista text-white font-semibold tracking-wide py-5 px-6 rounded-2xl mt-4 hover:bg-[#7D3C98] hover:shadow-card-hover transicao-suave transform hover:-translate-y-1">
+                    Revelar Meu Diagnóstico
+                </button>
+            </form>
+        </div>
+
+        <div id="loading-container" class="w-full max-w-2xl hidden text-center mx-auto">
+            <div class="spinner mb-8"></div>
+            <h2 id="loading-text" class="text-2xl font-serif text-grafite font-medium">Cruzando padrões sistêmicos...</h2>
+        </div>
+
+        <div id="result-container" class="w-full max-w-2xl hidden text-center mx-auto">
+            <span class="text-douradoMate text-xs font-semibold tracking-[0.15em] uppercase mb-6 block">Análise Concluída</span>
+            <h2 id="result-title" class="text-3xl md:text-4xl font-serif text-grafite mb-6 font-medium leading-tight"></h2>
+            <div id="result-image-wrapper" class="w-full overflow-hidden rounded-2xl md:rounded-3xl shadow-card-base mb-8 hidden">
+                <img id="result-image" src="" alt="Imagem do Diagnóstico" class="w-full h-48 md:h-[400px] object-cover">
+            </div>
+            <p id="result-desc" class="text-grafite opacity-90 text-lg md:text-xl leading-relaxed mb-10 font-normal max-w-xl mx-auto"></p>
+
+            <a href="https://link-da-pagina-de-vendas.com.br" class="inline-block">
+                <button class="bg-ametista border border-ametista text-white font-semibold tracking-wide py-4 px-8 rounded-2xl hover:bg-[#7D3C98] transicao-suave transform hover:-translate-y-1 shadow-card-base">
+                    Acessar o Passo a Passo do Destrave
+                </button>
+            </a>
+            <button onclick="resetState()" class="block mx-auto mt-6 text-xs text-gray-400 hover:text-ametista underline">
+                Testar Novamente
+            </button>
+        </div>
+    </main>
+
+    <script>
+        const questions = [
+            {
+                text: "Qual dessas situações mais rouba a sua energia hoje?",
+                imageUrl: "https://images.unsplash.com/photo-1499209974431-9dddcece7f88?q=80&w=800&auto=format&fit=crop",
+                options: [
+                    { text: "Pacientes que elogiam meu trabalho, mas somem quando passo o valor.", category: 'impostora' },
+                    { text: "Minha agenda vive oscilando: um mês ótimo, dois meses vazios.", category: 'escassez' },
+                    { text: "Sinto que trabalho muito, mas o dinheiro 'não para' na minha mão.", category: 'escassez' }
+                ]
+            },
+            {
+                text: "Ao pensar em cobrar um valor justo e alto pela sua sessão, qual sentimento surge primeiro?",
+                imageUrl: "https://images.unsplash.com/photo-1506869640319-ce1a44e11cb6?q=80&w=800&auto=format&fit=crop",
+                options: [
+                    { text: "Medo de ser julgada como 'mercenária' por colegas ou pela família.", category: 'julgamento' },
+                    { text: "Insegurança de não ser 'boa o suficiente' para cobrar caro.", category: 'impostora' },
+                    { text: "Pena do paciente, achando que ele não terá como pagar.", category: 'salvadora' }
+                ]
+            },
+            {
+                text: "Olhando para a história das mulheres da sua família, como era o fluxo do dinheiro?",
+                imageUrl: "https://images.unsplash.com/photo-1502082553048-f009c37129b9?q=80&w=800&auto=format&fit=crop",
+                options: [
+                    { text: "Escasso: Elas dependiam de outros ou viviam no sacrifício.", category: 'escassez' },
+                    { text: "Instável: O dinheiro vinha com muito esforço e logo acabava.", category: 'escassez' },
+                    { text: "Inexistente: Não tinham voz ou autonomia financeira.", category: 'salvadora' }
+                ]
+            },
+            {
+                text: "Quando um paciente pede desconto, qual é a sua reação interna?",
+                imageUrl: "./assets/imagem_4.png",
+                options: [
+                    { text: "Eu me sinto pequena e acabo cedendo para não perder a pessoa.", category: 'impostora' },
+                    { text: "Eu fico com raiva, mas dou o desconto para 'ajudar'.", category: 'salvadora' },
+                    { text: "Eu travo e não sei como argumentar sem parecer arrogante.", category: 'julgamento' }
+                ]
+            },
+            {
+                text: "Você sente que precisa estudar 'só mais um curso' antes de começar a lucrar de verdade?",
+                imageUrl: "./assets/imagem_5.png",
+                options: [
+                    { text: "Sim, sinto que ainda falta algo para eu ser uma autoridade.", category: 'impostora' },
+                    { text: "Às vezes, me sinto uma eterna aluna e nunca uma mestra.", category: 'impostora' },
+                    { text: "Não, eu sei que sou boa, mas o lucro simplesmente não vem.", category: 'escassez' }
+                ]
+            },
+            {
+                text: "O que te impede de aparecer com força e autoridade no seu Instagram?",
+                imageUrl: "./assets/imagem_6.png",
+                options: [
+                    { text: "O medo de ser vista e criticada por quem me conhece.", category: 'julgamento' },
+                    { text: "A sensação de que meu conteúdo é 'mais do mesmo'.", category: 'impostora' },
+                    { text: "Não sei como vender sem parecer chata ou invasiva.", category: 'julgamento' }
+                ]
+            },
+            {
+                text: "Você costuma estender o tempo da sessão ou responder pacientes fora do horário para se sentir 'útil'?",
+                imageUrl: "./assets/imagem_7.png",
+                options: [
+                    { text: "Sim, faço isso direto para garantir que o paciente goste de mim.", category: 'salvadora' },
+                    { text: "Às vezes, perco o limite entre ser terapeuta e ser 'amiga'.", category: 'salvadora' },
+                    { text: "Tenho limites claros, mas me sinto culpada por eles.", category: 'julgamento' }
+                ]
+            },
+            {
+                text: "Se eu te mostrasse hoje o 'Código' para cortar essas lealdades e dobrar o valor da sua sessão, você teria coragem de aplicar?",
+                imageUrl: "./assets/imagem_8.png",
+                options: [
+                    { text: "Sim, estou exausta de pagar para trabalhar.", category: 'escassez' },
+                    { text: "Sim, mas preciso de um passo a passo seguro.", category: 'impostora' },
+                    { text: "Ainda tenho receio, mas sei que algo precisa mudar.", category: 'julgamento' }
+                ]
+            }
+        ];
+
+        const loadingMessages = [
+            "Analisando leis sistêmicas...",
+            "Mapeando crenças e lealdades familiares...",
+            "Identificando bloqueios de precificação...",
+            "Gerando diagnóstico do perfil dominante..."
+        ];
+
+        const resultCopies = {
+            escassez: {
+                title: "Seu perfil dominante é:<br><span class='text-ametista'>Lealdade à Privação Familiar</span>",
+                imageUrl: "./assets/imagem_9.png",
+                desc: "Você inconscientemente repete o padrão de escassez das suas ancestrais para se sentir pertencente ao sistema. Enquanto não houver esse corte energético e a mudança para a Postura de Líder, sua agenda continuará sendo um peso e não um negócio."
+            },
+            impostora: {
+                title: "Seu perfil dominante é:<br><span class='text-ametista'>Síndrome da Impostora Sistêmica</span>",
+                imageUrl: "./assets/imagem_10.png",
+                desc: "Você projeta a falta de validação interna na sua precificação. O ciclo de 'eterna aluna' esconde o medo de assumir o lugar de Mestra. O destrave ocorre quando você ancora o seu valor na transformação que gera, não no seu tempo."
+            },
+            salvadora: {
+                title: "Seu perfil dominante é:<br><span class='text-ametista'>A Salvadora Exausta</span>",
+                imageUrl: "./assets/imagem_11.png",
+                desc: "Você quebra a lei sistêmica do Equilíbrio (Dar e Tomar). Ao ter pena do paciente e dar além do limite, você enfraquece a cura dele e seca a sua própria fonte de prosperidade. É hora de voltar ao seu lugar de terapeuta."
+            },
+            julgamento: {
+                title: "Seu perfil dominante é:<br><span class='text-ametista'>A Prisioneira do Julgamento</span>",
+                imageUrl: "./assets/imagem_12.png",
+                desc: "O medo de ser vista como 'arrogante' ou 'mercenária' está travando sua escala. Você carrega uma lealdade à invisibilidade para evitar críticas do seu ecossistema. Lembre-se: o lucro é a recompensa de quem tem coragem de assumir sua autoridade."
+            }
+        };
+
+        let quizState = {
+            currentStep: 0,
+            scores: { escassez: 0, impostora: 0, salvadora: 0, julgamento: 0 },
+            leadData: null
+        };
+
+        const STORAGE_KEY = 'quiz_terapeuta_lucrativa';
+
+        function loadState() {
+            const savedState = localStorage.getItem(STORAGE_KEY);
+            if (savedState) {
+                quizState = JSON.parse(savedState);
+            }
+        }
+
+        function saveState() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(quizState));
+            document.cookie = `diagnostico_terapeuta=${JSON.stringify(quizState.scores)}; path=/; max-age=86400`;
+        }
+
+        function resetState() {
+            localStorage.removeItem(STORAGE_KEY);
+            location.reload();
+        }
+
+        const elements = {
+            quiz: document.getElementById('quiz-container'),
+            lead: document.getElementById('lead-container'),
+            loading: document.getElementById('loading-container'),
+            result: document.getElementById('result-container'),
+            questionText: document.getElementById('question-text'),
+            optionsContainer: document.getElementById('options-container'),
+            progressBar: document.getElementById('progress-bar'),
+            questionCounter: document.getElementById('question-counter'),
+            leadForm: document.getElementById('lead-form'),
+            loadingText: document.getElementById('loading-text'),
+            resultTitle: document.getElementById('result-title'),
+            resultDesc: document.getElementById('result-desc'),
+            imageWrapper: document.getElementById('image-wrapper'),
+            questionImage: document.getElementById('question-image'),
+            contentWrapper: document.getElementById('content-wrapper')
+        };
+
+        function initApp() {
+            loadState();
+
+            if (quizState.leadData !== null) {
+                finalizeAndRenderResult();
+            } else if (quizState.currentStep >= questions.length) {
+                switchScreen(elements.quiz, elements.lead);
+                elements.progressBar.style.width = '100%';
+            } else {
+                renderQuestion();
+                updateProgress();
+            }
+        }
+
+        function renderQuestion() {
+            const currentQ = questions[quizState.currentStep];
+            elements.questionCounter.innerText = `Pergunta ${quizState.currentStep + 1} de ${questions.length}`;
+            elements.questionText.innerText = currentQ.text;
+            elements.optionsContainer.innerHTML = '';
+
+            // Lógica UX de Imagem vs Sem Imagem
+            if (currentQ.imageUrl) {
+                elements.questionImage.src = currentQ.imageUrl;
+                elements.imageWrapper.classList.remove('hidden');
+                
+                // Retorna ao estilo Split Screen no Desktop
+                elements.contentWrapper.classList.remove('md:w-full', 'md:text-center', 'items-center');
+                elements.contentWrapper.classList.add('md:w-1/2', 'md:text-left');
+            } else {
+                elements.imageWrapper.classList.add('hidden');
+                
+                // Centraliza e expande o texto caso não haja imagem
+                elements.contentWrapper.classList.remove('md:w-1/2', 'md:text-left');
+                elements.contentWrapper.classList.add('md:w-full', 'md:text-center', 'items-center');
+            }
+
+            currentQ.options.forEach(option => {
+                const btn = document.createElement('button');
+                btn.className = 'opcao-btn';
+                btn.innerText = option.text;
+
+                // Centraliza o texto do botão se não houver imagem (Opcional para estética)
+                if (!currentQ.imageUrl) btn.classList.add('md:text-center');
+
+                btn.onclick = function () {
+                    const allBtns = elements.optionsContainer.querySelectorAll('button');
+                    allBtns.forEach(b => b.disabled = true);
+                    this.classList.add('selecionado');
+                    setTimeout(() => handleAnswer(option.category), 300);
+                };
+
+                elements.optionsContainer.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(category) {
+            quizState.scores[category]++;
+            quizState.currentStep++;
+            saveState();
+
+            elements.quiz.classList.remove('animar-entrada');
+            elements.quiz.classList.add('fade-out');
+
+            setTimeout(() => {
+                updateProgress();
+                if (quizState.currentStep < questions.length) {
+                    renderQuestion();
+                    elements.quiz.classList.remove('fade-out');
+                    void elements.quiz.offsetWidth;
+                    elements.quiz.classList.add('animar-entrada');
+                } else {
+                    switchScreen(elements.quiz, elements.lead);
+                }
+            }, 400);
+        }
+
+        function updateProgress() {
+            const progress = (quizState.currentStep / questions.length) * 100;
+            elements.progressBar.style.width = quizState.currentStep === 0 ? '5%' : `${progress}%`;
+        }
+
+        function switchScreen(hideEl, showEl) {
+            hideEl.classList.add('hidden');
+            hideEl.classList.remove('animar-entrada', 'fade-out');
+            showEl.classList.remove('hidden');
+            showEl.classList.add('animar-entrada');
+        }
+
+        elements.leadForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            quizState.leadData = {
+                name: document.getElementById('lead-name').value,
+                email: document.getElementById('lead-email').value
+            };
+            saveState();
+
+            elements.lead.classList.remove('animar-entrada');
+            elements.lead.classList.add('fade-out');
+
+            setTimeout(() => {
+                switchScreen(elements.lead, elements.loading);
+                executeAuthoritySpinner();
+            }, 400);
+        });
+
+        function executeAuthoritySpinner() {
+            let msgIndex = 0;
+            const msgInterval = setInterval(() => {
+                msgIndex++;
+                if (msgIndex < loadingMessages.length) {
+                    elements.loadingText.style.opacity = 0;
+                    setTimeout(() => {
+                        elements.loadingText.innerText = loadingMessages[msgIndex];
+                        elements.loadingText.style.opacity = 1;
+                    }, 200);
+                }
+            }, 1200);
+
+            setTimeout(() => {
+                clearInterval(msgInterval);
+                switchScreen(elements.loading, elements.result);
+                finalizeAndRenderResult();
+            }, 4500);
+        }
+
+        function finalizeAndRenderResult() {
+            const scores = quizState.scores;
+
+            // Encontra a categoria com maior pontuação
+            const perfilDominante = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
+
+            // Resgata os textos e a imagem do array
+            const copyData = resultCopies[perfilDominante];
+
+            // Aplica os textos
+            elements.resultTitle.innerHTML = copyData.title;
+            elements.resultDesc.innerHTML = `"${copyData.desc}"`;
+
+            // ====== APLICA A IMAGEM ======
+            const resultImageWrapper = document.getElementById('result-image-wrapper');
+            const resultImage = document.getElementById('result-image');
+
+            if (copyData.imageUrl) {
+                resultImage.src = copyData.imageUrl;
+                resultImageWrapper.classList.remove('hidden');
+            } else {
+                resultImageWrapper.classList.add('hidden'); // Esconde caso esqueça de colocar a imagem em algum perfil
+            }
+            // ===================================
+
+            // Exibe a tela final
+            elements.quiz.classList.add('hidden');
+            elements.lead.classList.add('hidden');
+            elements.loading.classList.add('hidden');
+            elements.result.classList.remove('hidden');
+            elements.result.classList.add('animar-entrada');
+        }
+
+        initApp();
+    </script>
+</body>
+
+</html>
